@@ -126,12 +126,32 @@ def rule_based_router(user_prompt: str) -> PromptRoute:
         toks = [t for t in re.split(r"[\s;]+", s) if t]
         return " ".join(toks[:5]).strip()
 
-    # keep A, remove B
+    # keep/remove in either order
     if "keep" in p and "remove" in p:
-        tail = p.split("keep", 1)[1]
-        a = tail.split("remove", 1)[0]
-        b = tail.split("remove", 1)[1]
-        return PromptRoute("contrastive", "FG", clean(a), clean(b)).normalize()
+        k_i = p.find("keep")
+        r_i = p.find("remove")
+        # Case 1: keep A remove B
+        if k_i < r_i:
+            tail = p.split("keep", 1)[1]
+            if "remove" in tail:
+                a, b = tail.split("remove", 1)
+                return PromptRoute("contrastive", "FG", clean(a), clean(b)).normalize()
+        # Case 2: remove B keep ... (often means 'remove B, keep the rest')
+        else:
+            after_remove = p.split("remove", 1)[1]
+            if "keep" in after_remove:
+                b, keep_tail = after_remove.split("keep", 1)
+            else:
+                b, keep_tail = after_remove, ""
+            b_clean = clean(b)
+            keep_tail_l = keep_tail.strip()
+            # 'keep all/everything' -> background route: remove B, keep the rest
+            if ("keep all" in p) or ("keep everything" in p) or ("all" in keep_tail_l.split()) or ("everything" in keep_tail_l.split()):
+                return PromptRoute("negative", "BG", "", b_clean).normalize()
+            keep_clean = clean(keep_tail)
+            if keep_clean:
+                return PromptRoute("contrastive", "FG", keep_clean, b_clean).normalize()
+            return PromptRoute("negative", "BG", "", b_clean).normalize()
 
     if "except" in p:
         neg = clean(p.split("except", 1)[1])
