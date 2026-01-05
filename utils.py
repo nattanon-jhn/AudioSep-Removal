@@ -1,7 +1,3 @@
-
-Folder highlights
-Evaluation data from an AudioSep-Neg project includes results for positive, negative, contrastive, and negation audio separation tasks.
-
 import os
 import datetime
 import json
