@@ -230,7 +230,7 @@ def route_prompt(
     enable_llm_router: bool = True,
     llm_kwargs: Optional[Dict[str, Any]] = None,
     strict: bool = False,
-    use_cache: bool = True,
+    use_cache: bool = False,
 ) -> PromptRoute:
     """
     High-level router.
